@@ -1,7 +1,10 @@
 package com.alura.concord.media
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -39,4 +42,17 @@ suspend fun Context.saveOnInternalStorage(
             onSuccess(newFile.path)
         }
     }
+}
+
+fun Context.openWith(mediaToOpen: String) {
+
+    val contentUri: Uri =
+        FileProvider.getUriForFile(this, "com.alura.concord.fileprovider", File(mediaToOpen))
+
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_VIEW
+        setDataAndType(contentUri, "image/*")
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+    startActivity(Intent.createChooser(shareIntent, "Open with"))
 }

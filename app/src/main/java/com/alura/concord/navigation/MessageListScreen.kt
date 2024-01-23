@@ -18,6 +18,7 @@ import com.alura.concord.extensions.showMessage
 import com.alura.concord.media.getAllImages
 import com.alura.concord.media.getNameByUri
 import com.alura.concord.media.imagePermission
+import com.alura.concord.media.openWith
 import com.alura.concord.media.persistUriPermission
 import com.alura.concord.media.saveOnInternalStorage
 import com.alura.concord.media.verifyPermission
@@ -182,7 +183,7 @@ fun NavGraphBuilder.messageListScreen(
 
                 ModalBottomShareSheet(
                     onOpenWith = {
-
+                        context.openWith(mediaToOpen)
                     },
                     onShare = {
 
@@ -198,6 +199,7 @@ fun NavGraphBuilder.messageListScreen(
         }
     }
 }
+
 
 internal fun NavHostController.navigateToMessageScreen(
     chatId: Long, navOptions: NavOptions? = null,
