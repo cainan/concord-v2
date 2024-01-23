@@ -15,6 +15,7 @@ import com.alura.concord.database.entities.MessageEntity
 import com.alura.concord.database.entities.toDownloadableFile
 import com.alura.concord.database.entities.toMessageFile
 import com.alura.concord.navigation.messageChatIdArgument
+import com.alura.concord.network.DownloadService
 import com.alura.concord.util.getFormattedCurrentDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,7 @@ class MessageListViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val messageDao: MessageDao,
     private val chatDao: ChatDao,
-    private val downloadableFileDao: DownloadableFileDao
+    private val downloadableFileDao: DownloadableFileDao,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MessageListUiState())
     val uiState: StateFlow<MessageListUiState>
@@ -92,7 +93,7 @@ class MessageListViewModel @Inject constructor(
     }
 
     private suspend fun loadMessageWithDownloadableFile(
-        searchedMessage: MessageWithFile
+        searchedMessage: MessageWithFile,
     ): MessageWithFile? {
         return searchedMessage.idDownloadableFile?.let { contentId ->
             val downloadableFileEntity = downloadableFileDao.getById(contentId).first()
@@ -115,7 +116,7 @@ class MessageListViewModel @Inject constructor(
     }
 
     private fun saveMessage(
-        userMessage: MessageEntity
+        userMessage: MessageEntity,
     ) {
         viewModelScope.launch {
             userMessage.let { messageDao.insert(it) }
@@ -149,7 +150,7 @@ class MessageListViewModel @Inject constructor(
     }
 
     fun loadMediaInScreen(
-        path: String
+        path: String,
     ) {
         _uiState.value.onMediaInSelectionChange(path)
     }
@@ -218,7 +219,22 @@ class MessageListViewModel @Inject constructor(
                 messages = updatedMessages,
                 fileInDownload = fileInDownload
             )
+            makeDownload(fileInDownload)
+        }
+    }
 
+    private fun makeDownload(fileInDownload: FileInDownload) {
+        viewModelScope.launch {
+            DownloadService.makeDownloadByURL(
+                url = fileInDownload.url,
+                onDownloadFinished = {inputStream ->
+                    _uiState.value = _uiState.value.copy(
+                        fileInDownload = fileInDownload.copy(
+                            inputStream = inputStream
+                        )
+                    )
+                },
+            )
         }
     }
 

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -18,11 +19,12 @@ import com.alura.concord.media.getAllImages
 import com.alura.concord.media.getNameByUri
 import com.alura.concord.media.imagePermission
 import com.alura.concord.media.persistUriPermission
+import com.alura.concord.media.saveOnInternalStorage
 import com.alura.concord.media.verifyPermission
 import com.alura.concord.ui.chat.MessageListViewModel
 import com.alura.concord.ui.chat.MessageScreen
-import com.alura.concord.ui.components.ModalBottomSheetFile
 import com.alura.concord.ui.components.ModalBottomShareSheet
+import com.alura.concord.ui.components.ModalBottomSheetFile
 import com.alura.concord.ui.components.ModalBottomSheetSticker
 
 internal const val messageChatRoute = "messages"
@@ -52,6 +54,23 @@ fun NavGraphBuilder.messageListScreen(
                 }
             }
 
+            LaunchedEffect(uiState.fileInDownload) {
+                uiState.fileInDownload?.let { fileInDownload ->
+                    fileInDownload.inputStream?.let { inputStream ->
+                        context.saveOnInternalStorage(
+                            inputStream = inputStream,
+                            fileName = fileInDownload.name,
+                            onSuccess = { filePath ->
+                                viewModelMessage.finishDownload(
+                                    messageId = fileInDownload.messageId,
+                                    contentPath = filePath
+                                )
+                            }
+                        )
+                    }
+
+                }
+            }
 
             MessageScreen(
                 state = uiState,
@@ -75,6 +94,7 @@ fun NavGraphBuilder.messageListScreen(
                     onBack()
                 },
                 onContentDownload = { message ->
+
                     if (viewModelMessage.downloadInProgress()) {
                         viewModelMessage.startDownload(message)
                     } else {
@@ -180,7 +200,7 @@ fun NavGraphBuilder.messageListScreen(
 }
 
 internal fun NavHostController.navigateToMessageScreen(
-    chatId: Long, navOptions: NavOptions? = null
+    chatId: Long, navOptions: NavOptions? = null,
 ) {
     navigate("$messageChatRoute/$chatId", navOptions)
 }
