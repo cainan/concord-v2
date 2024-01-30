@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -66,6 +67,9 @@ fun NavGraphBuilder.messageListScreen(
                                     messageId = fileInDownload.messageId,
                                     contentPath = filePath
                                 )
+                            },
+                            onFailure = {
+                                viewModelMessage.failureDownload(messageId = fileInDownload.messageId)
                             }
                         )
                     }

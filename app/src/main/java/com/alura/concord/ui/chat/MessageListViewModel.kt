@@ -227,13 +227,16 @@ class MessageListViewModel @Inject constructor(
         viewModelScope.launch {
             DownloadService.makeDownloadByURL(
                 url = fileInDownload.url,
-                onDownloadFinished = {inputStream ->
+                onDownloadFinished = { inputStream ->
                     _uiState.value = _uiState.value.copy(
                         fileInDownload = fileInDownload.copy(
                             inputStream = inputStream
                         )
                     )
                 },
+                onFailureDownload = {
+                    failureDownload(fileInDownload.messageId)
+                }
             )
         }
     }
