@@ -51,11 +51,10 @@ suspend fun Context.saveOnInternalStorage(
 fun Context.openWith(mediaToOpen: String) {
     val file = File(mediaToOpen)
 
-    val fileExtension = MimeTypeMap.getFileExtensionFromUrl(Uri.encode(file.path))
-    val fileMimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension) ?: "*/*"
+    val fileMimeType = file.getMimeType()
 
     val contentUri: Uri =
-        FileProvider.getUriForFile(this, "com.alura.concord.fileprovider", File(mediaToOpen))
+        getFileUriProvider(mediaToOpen)
 
     val shareIntent = Intent().apply {
         action = Intent.ACTION_VIEW
@@ -63,4 +62,30 @@ fun Context.openWith(mediaToOpen: String) {
         flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
     }
     startActivity(Intent.createChooser(shareIntent, "Open with"))
+}
+
+private fun Context.getFileUriProvider(mediaToOpen: String): Uri {
+    return FileProvider.getUriForFile(this, "com.alura.concord.fileprovider", File(mediaToOpen))
+}
+
+private fun File.getMimeType(): String {
+    val fileExtension = MimeTypeMap.getFileExtensionFromUrl(Uri.encode(path))
+    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension) ?: "*/*"
+}
+
+fun Context.shareFile(mediaToOpen: String) {
+    val file = File(mediaToOpen)
+
+    val fileMimeType = file.getMimeType()
+
+    val contentUri: Uri =
+        getFileUriProvider(mediaToOpen)
+
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_STREAM, contentUri)
+        type = fileMimeType
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+    }
+    startActivity(Intent.createChooser(shareIntent, "Share with"))
 }

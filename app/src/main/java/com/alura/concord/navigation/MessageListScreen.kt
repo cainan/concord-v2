@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -22,6 +21,7 @@ import com.alura.concord.media.imagePermission
 import com.alura.concord.media.openWith
 import com.alura.concord.media.persistUriPermission
 import com.alura.concord.media.saveOnInternalStorage
+import com.alura.concord.media.shareFile
 import com.alura.concord.media.verifyPermission
 import com.alura.concord.ui.chat.MessageListViewModel
 import com.alura.concord.ui.chat.MessageScreen
@@ -190,7 +190,7 @@ fun NavGraphBuilder.messageListScreen(
                         context.openWith(mediaToOpen)
                     },
                     onShare = {
-
+                        context.shareFile(mediaToOpen)
                     },
                     onSave = {
 
