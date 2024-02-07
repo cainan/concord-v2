@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -31,7 +32,8 @@ suspend fun Context.saveOnInternalStorage(
     onSuccess: (String) -> Unit,
     onFailure: () -> Unit,
 ) {
-    val path = getExternalFilesDir("temp")
+    val folderName = "temp"
+    val path = getExternalFilesDir(folderName)
     Log.d("teste", "path: $path")
     val newFile = File(path, fileName)
 
@@ -90,13 +92,24 @@ fun Context.shareFile(mediaToOpen: String) {
     startActivity(Intent.createChooser(shareIntent, "Share with"))
 }
 
-fun Context.saveOnExternalStorage(mediaLink: String, destinationUri: Uri) {
+fun Context.saveOnExternalStorage(
+    mediaLink: String,
+    destinationUri: Uri,
+    onSuccess: () -> Unit,
+    onFailure: () -> Unit,
+) {
     val sourceFile = File(mediaLink)
 
-    contentResolver.openOutputStream(destinationUri)?.use { outputStream ->
-        sourceFile.inputStream().use { inputStream ->
-            inputStream.copyTo(outputStream)
+    try {
+        contentResolver.openOutputStream(destinationUri)?.use { outputStream ->
+            sourceFile.inputStream().use { inputStream ->
+                inputStream.copyTo(outputStream)
+            }
         }
+        onSuccess()
+    } catch (e: Exception) {
+        val newFile = DocumentFile.fromSingleUri(this, destinationUri)
+        newFile?.delete()
+        onFailure()
     }
-
 }

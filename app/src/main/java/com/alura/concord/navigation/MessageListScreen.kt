@@ -189,7 +189,16 @@ fun NavGraphBuilder.messageListScreen(
                 onResult = {
                     it?.let { uri: Uri ->
                         val mediaToOpen = uiState.selectedMessage.mediaLink
-                        context.saveOnExternalStorage(mediaToOpen, uri)
+                        context.saveOnExternalStorage(
+                            mediaToOpen,
+                            uri,
+                            onSuccess = {
+                                context.showMessage("File Saved")
+                            },
+                            onFailure = {
+                                context.showMessage("Error saving the file")
+                            },
+                        )
                     }
                 })
 
