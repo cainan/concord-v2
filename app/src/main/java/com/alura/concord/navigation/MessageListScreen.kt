@@ -1,5 +1,10 @@
 package com.alura.concord.navigation
 
+import android.Manifest
+import android.content.Intent
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,6 +25,7 @@ import com.alura.concord.media.getNameByUri
 import com.alura.concord.media.imagePermission
 import com.alura.concord.media.openWith
 import com.alura.concord.media.persistUriPermission
+import com.alura.concord.media.saveOnExternalStorage
 import com.alura.concord.media.saveOnInternalStorage
 import com.alura.concord.media.shareFile
 import com.alura.concord.media.verifyPermission
@@ -181,6 +187,26 @@ fun NavGraphBuilder.messageListScreen(
                 )
             }
 
+            val requestWritePermission = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission(),
+                onResult = { isGranted ->
+                    if (isGranted) {
+                        val mediaToOpen = uiState.selectedMessage.mediaLink
+                        context.saveOnExternalStorage(mediaToOpen)
+                    }
+
+                })
+
+            val requestExternalPermission = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.StartActivityForResult(),
+                onResult = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if (Environment.isExternalStorageManager()) {
+                            val mediaToOpen = uiState.selectedMessage.mediaLink
+                            context.saveOnExternalStorage(mediaToOpen)
+                        }
+                    }
+                })
 
             if (uiState.showBottomShareSheet) {
                 val mediaToOpen = uiState.selectedMessage.mediaLink
@@ -193,7 +219,26 @@ fun NavGraphBuilder.messageListScreen(
                         context.shareFile(mediaToOpen)
                     },
                     onSave = {
+                        val writePermissionIsGranted =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                Environment.isExternalStorageManager()
+                            } else {
+                                !context.verifyPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            }
 
+                        if (writePermissionIsGranted) {
+                            context.saveOnExternalStorage(mediaToOpen)
+                        } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                requestExternalPermission.launch(
+                                    Intent(
+                                        ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+                                    )
+                                )
+                            } else {
+                                requestWritePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            }
+                        }
                     },
                     onBack = {
                         viewModelMessage.setShowBottomShareSheet(false)
